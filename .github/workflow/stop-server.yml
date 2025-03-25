@@ -1,4 +1,4 @@
-name: Stop EC2 Server at 9 pm
+name: Stop EC2 Server
 
 on:
   schedule:
@@ -24,13 +24,12 @@ jobs:
      - name: Check EC2 Instance State
        id: check-state
        run: |
-          STATE=$(aws ec2 describe-instances --instance-ids ${{ secrets.INSTANCE_ID }} \
+          STATE=$(aws ec2 describe-instances --instance-ids ${{ secrets.AWS_INSTANCE_ID }} \
           --query "Reservations[*].Instances[*].State.Name" --output text)
           echo "INSTANCE_STATE=$STATE" >> $GITHUB_ENV
-          echo "EC2 Instance is currently: $STATE"
 
-     - name: Stop EC2 Instance if running
-       if: env.INSTANCE_STATE == 'running'
+     - name: Stop EC2 Instance if Running
+       if: contains(env.INSTANCE_STATE, 'running')
        run: |
-          aws ec2 stop-instances --instance-ids ${{ secrets.INSTANCE_ID }}
-          echo "EC2 Instance stopping"
+          aws ec2 stop-instances --instance-ids ${{ secrets.AWS_INSTANCE_ID }}
+          echo "EC2 instance stopped successfully"
