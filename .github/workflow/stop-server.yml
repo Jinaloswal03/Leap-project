@@ -1,10 +1,9 @@
-name: Stop EC2 Server at 9 pm
+name: Stop EC2 Server
 
 on:
-   workflow_dispatch:  # Allows manual trigger
-   schedule:
+  schedule:
     - cron: "30 15 * * *"  # Runs at 15:30 UTC (9:00 PM IST)
- 
+  workflow_dispatch:  # Allows manual trigger
 
 permissions:
   id-token: write
@@ -18,10 +17,9 @@ jobs:
      - name: Configure AWS Credentials
        uses: aws-actions/configure-aws-credentials@v2
        with:
-          role-to-assume: arn:aws:iam::123456789012:role/my-github-actions-role
-          role-session-name: my-github-actions-session
-          aws-region: us-east-1
-          
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Using GitHub Secrets
+          aws-region: us-east-2
+
      - name: Check EC2 Instance State
        id: check-state
        uses: aws-actions/aws-cli-action@v1
