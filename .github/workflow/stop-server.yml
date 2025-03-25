@@ -1,0 +1,39 @@
+name: Stop EC2 Server at 9 pm
+
+on:
+   workflow_dispatch:  # Allows manual trigger
+   schedule:
+    - cron: "30 15 * * *"  # Runs at 15:30 UTC (9:00 PM IST)
+ 
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  stop-server:
+    runs-on: ubuntu-latest
+
+    steps:
+     - name: Configure AWS Credentials
+       uses: aws-actions/configure-aws-credentials@v2
+       with:
+          role-to-assume: arn:aws:iam::123456789012:role/my-github-actions-role
+          role-session-name: my-github-actions-session
+          aws-region: us-east-1
+          
+     - name: Check EC2 Instance State
+       id: check-state
+       uses: aws-actions/aws-cli-action@v1
+       with:
+        command: >
+          ec2 describe-instances --instance-ids i-xxxxxxxxxxxxxxxxx 
+          --query "Reservations[*].Instances[*].State.Name" 
+          --output text
+
+     - name: Stop EC2 Instance if Running
+       if: contains(steps.check-state.outputs.stdout, 'running')
+       uses: aws-actions/aws-cli-action@v1
+       with:
+        command: >
+          ec2 stop-instances --instance-ids i-xxxxxxxxxxxxxxxxx
