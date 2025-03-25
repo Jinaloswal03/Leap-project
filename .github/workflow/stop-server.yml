@@ -17,21 +17,20 @@ jobs:
      - name: Configure AWS Credentials
        uses: aws-actions/configure-aws-credentials@v2
        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Using GitHub Secrets
-          aws-region: us-east-2
-
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: my-github-actions-session
+          aws-region: ${{ secrets.AWS_REGION }}
+          
      - name: Check EC2 Instance State
        id: check-state
-       uses: aws-actions/aws-cli-action@v1
-       with:
-        command: >
-          ec2 describe-instances --instance-ids i-xxxxxxxxxxxxxxxxx 
-          --query "Reservations[*].Instances[*].State.Name" 
-          --output text
+       run: |
+          STATE=$(aws ec2 describe-instances --instance-ids ${{ secrets.INSTANCE_ID }} \
+          --query "Reservations[*].Instances[*].State.Name" --output text)
+          echo "INSTANCE_STATE=$STATE" >> $GITHUB_ENV
+          echo "EC2 Instance is currently: $STATE"
 
-     - name: Stop EC2 Instance if Running
-       if: contains(steps.check-state.outputs.stdout, 'running')
-       uses: aws-actions/aws-cli-action@v1
-       with:
-        command: >
-          ec2 stop-instances --instance-ids i-xxxxxxxxxxxxxxxxx
+     - name: Stop EC2 Instance if running
+       if: env.INSTANCE_STATE == 'running'
+       run: |
+          aws ec2 stop-instances --instance-ids ${{ secrets.INSTANCE_ID }}
+          echo "EC2 Instance stopping"
